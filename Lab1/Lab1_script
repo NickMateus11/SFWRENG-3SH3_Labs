@@ -1,0 +1,44 @@
+#! /bin/bash
+
+# SFWRENG 3SH3 Lab Assignment 1
+# Written by:
+#   Nicholas Mateus
+#   400134675, mateusn
+
+trap 'echo Ctrl-C will not terminate $0' INT
+trap 'echo Ctrl-\\ will not terminate $0' QUIT
+trap 'echo Ctrl-Z was pressed! $0' TSTP
+
+TIMEOUT=5
+running=1
+
+echo -n "Please Type an Input: "
+while [ $running -eq 1 ]
+do
+    read -t 1 INPUT
+
+    if [ $(($TIMEOUT-$SECONDS)) -eq 0 ]
+    then
+        echo "TIMEOUT: Program Timer Exceeded"
+        exit 1
+    fi
+
+    if [ "$INPUT" != "" ]
+    then
+        echo "Your input: $INPUT"
+        if [ "$INPUT" != "stop" ]
+        then
+            echo -n "Please Type an Input: "
+        else
+            running=0
+        fi
+    fi    
+done
+
+echo "Exiting ..."
+
+trap INT
+trap QUIT
+trap TSTP
+
+exit 0
