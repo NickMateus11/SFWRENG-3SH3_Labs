@@ -6,7 +6,84 @@
 #   ghaurm3, 400261852
 #   betikn, 400246583
 
-# Trap Signals
+# Create SIGNAL Traps#! /bin/bash
+
+# SFWRENG 3SH3 Lab Assignment 1
+# Group Members:
+#   mateusn, 400134675
+#   ghaurm3, 400261852
+#   betikn, 400246583
+
+# Create SIGNAL Traps
+trap 'echo Ctrl-C will not terminate $0' INT
+trap 'echo Ctrl-\\ will not terminate $0' QUIT
+trap 'echo Ctrl-Z was pressed! $0' TSTP
+
+# Take user input if specified
+if [ "$1" != "" ]
+then
+    TIMEOUT=$1
+else
+    # Default timeout
+    TIMEOUT=30
+fi
+
+# Start timer in the background
+sleep $TIMEOUT &
+# Store process ID
+SLEEP_PID=$!
+
+EXIT_STATUS=0
+
+# Start program loop
+echo -n "Please Type an Input: "
+while true
+do
+    # Read input - with 1 second timeout
+    read -t 1 INPUT  
+
+    # check if sleep timer expired 
+    ps -p $SLEEP_PID > /dev/null
+    if [ $? -ne 0 ]
+    then
+        # QUIT PROGRAM
+        echo "" # newline
+        echo "TIMEOUT: Program Timer Exceeded"
+        # Exit with error
+        EXIT_STATUS=1
+        break
+    else
+        # Ensure sleep was not stopped by a CTRL-Z - special case
+        kill -CONT $SLEEP_PID
+    fi
+
+    # Check user input
+    if [ ! -z "$INPUT" ]
+    then
+        echo "Your input: $INPUT"
+        if [ "$INPUT" == "stop" ]
+        then
+            break
+        else
+            echo -n "Please Type an Input: "
+        fi
+    fi 
+done
+
+echo "Exiting ..."
+
+# Kill sleep if still running
+kill $SLEEP_PID 2> /dev/null
+
+# Restore SIG
+trap INT
+trap QUIT
+trap TSTP
+
+exit $EXIT_STATUS
+
+
+
 trap 'echo Ctrl-C will not terminate $0' INT
 trap 'echo Ctrl-\\ will not terminate $0' QUIT
 trap 'echo Ctrl-Z was pressed! $0' TSTP
