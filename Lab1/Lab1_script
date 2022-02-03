@@ -6,14 +6,6 @@
 #   ghaurm3, 400261852
 #   betikn, 400246583
 
-# Create SIGNAL Traps#! /bin/bash
-
-# SFWRENG 3SH3 Lab Assignment 1
-# Group Members:
-#   mateusn, 400134675
-#   ghaurm3, 400261852
-#   betikn, 400246583
-
 # Create SIGNAL Traps
 trap 'echo Ctrl-C will not terminate $0' INT
 trap 'echo Ctrl-\\ will not terminate $0' QUIT
@@ -81,59 +73,3 @@ trap QUIT
 trap TSTP
 
 exit $EXIT_STATUS
-
-
-
-trap 'echo Ctrl-C will not terminate $0' INT
-trap 'echo Ctrl-\\ will not terminate $0' QUIT
-trap 'echo Ctrl-Z was pressed! $0' TSTP
-
-# Take user input if specified
-if [ "$1" != "" ]
-then
-    TIMEOUT=$1
-else
-    # Default timeout
-    TIMEOUT=30
-fi
-
-# Start program loop
-running=1
-echo -n "Please Type an Input: "
-while [ $running -eq 1 ]
-do
-    # Read input - with 1 second timeout
-    read -t 1 INPUT
-
-    # Check program has exeeced time limit
-    if [ $(($TIMEOUT-$SECONDS)) -eq 0 ]
-    then
-        # QUIT PROGRAM
-        echo "" # newline
-        echo "TIMEOUT: Program Timer Exceeded"
-        # Exit with error
-        exit 1
-    fi
-
-    # Check user input
-    if [ "$INPUT" != "" ]
-    then
-        echo "Your input: $INPUT"
-        if [ "$INPUT" != "stop" ]
-        then
-            echo -n "Please Type an Input: "
-        else
-            running=0
-        fi
-    fi    
-done
-
-echo "Exiting ..."
-
-# Restore trapped signals
-trap INT
-trap QUIT
-trap TSTP
-
-# exit gracefully
-exit 0
