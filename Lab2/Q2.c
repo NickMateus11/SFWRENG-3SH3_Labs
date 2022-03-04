@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <semaphore.h>
+#include <pthread.h>
 
 pthread_t producer;
 pthread_t consumer;
@@ -13,7 +14,7 @@ typedef struct {
 } item;
 
 void* insert_item(item* buffer) {
-    while (true) {
+    while (1) {
         sem_wait(&empty);
         sem_wait(&mutex);
         // insert data
@@ -24,7 +25,7 @@ void* insert_item(item* buffer) {
 }
 
 void* remove_item(item* buffer) {
-    while (true) {
+    while (1) {
         sem_wait(&full);
         sem_wait(&mutex);
         // remove data
