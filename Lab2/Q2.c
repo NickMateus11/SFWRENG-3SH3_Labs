@@ -61,12 +61,11 @@ void* main(int argc, char **argv) {
         printf("Not enough args\r\n");
         exit(1);
     }
-    int sleep_time = atoi(argv[1]);
+    int sleep_time   = atoi(argv[1]);
     int numProducers = atoi(argv[2]);
     int numConsumers = atoi(argv[3]);
 
-    // Critical Sections
-    int arr[BUFF_SIZE]; // heap allocate?
+    int arr[BUFF_SIZE];
     
     sem_init(&empty, 1, BUFF_SIZE); 
     sem_init(&full , 1, 0);
