@@ -10,11 +10,11 @@
 pthread_t producer;
 pthread_t consumer;
 
-sem_t empty;
-sem_t full;
-sem_t mutex;
+sem_t empty; // Counting Semaphore for # of EMPTY slots in buffer
+sem_t full;  // Counting Semaphore for # of FULL slots in buffer
+sem_t mutex; // lock critical sections
 
-int idx_insert = 0;
+int idx_insert  = 0;
 int idx_consume = 0;
 
 void* insert_item(void (*buffer)) {
@@ -23,34 +23,33 @@ void* insert_item(void (*buffer)) {
         sem_wait(&mutex);
 
         // insert data
-        ((int*)(buffer))[idx_insert%BUFF_SIZE] = idx_insert;
+        ((int*)buffer)[idx_insert%BUFF_SIZE] = idx_insert;
         printf("PRODUCER: Value Added: %d\r\n", idx_insert);
         idx_insert++;
 
         sem_post(&mutex);
         sem_post(&full);
         
-        sleep(rand()%3+1);
+        usleep((rand()%1500+500)*1000); // sleep 0.5 - 1.99 sec
     }
 
 }
 
 void* remove_item(void (*buffer)) {
-    int idx = 0;
     int val;
     while (1) {
         sem_wait(&full);
         sem_wait(&mutex);
         
         // remove data
-        val = ((int*)(buffer))[idx_consume%BUFF_SIZE];
+        val = ((int*)buffer)[idx_consume%BUFF_SIZE];
         printf("CONSUMER: Value Consumed: %d\r\n", val);
         idx_consume++;
         
         sem_post(&mutex);
         sem_post(&empty);
 
-        sleep(rand()%3+1);
+        usleep((rand()%1500+500)*1000); // sleep 0.5 - 1.99 sec
     }
 }
 
@@ -69,7 +68,7 @@ void* main(int argc, char **argv) {
     
     sem_init(&empty, 1, BUFF_SIZE); 
     sem_init(&full , 1, 0);
-    sem_init(&mutex, 1, 1);
+    sem_init(&mutex, 1, 0); // lock
 
     for (int i=0; i<numProducers; i++)
         pthread_create(&producer, NULL, insert_item, arr);
@@ -77,9 +76,11 @@ void* main(int argc, char **argv) {
     for (int i=0; i<numConsumers; i++)    
         pthread_create(&consumer, NULL, remove_item, arr);
 
-    printf("Sleeping for: %d\r\n", sleep_time);
+    sem_post(&mutex); // allow threads to begin releasing the lock
+
+    printf("MAIN: Sleeping for: %d\r\n", sleep_time);
     sleep(sleep_time);    
-    printf("Sleeping DONE.. Exiting\r\n");
+    printf("MAIN: Sleeping DONE.. Exiting\r\n");
 
     sem_destroy(&empty);
     sem_destroy(&full);
