@@ -38,6 +38,7 @@ void *fun2(void *arg)
 
 int main()
 {
+    printf("mateusn 400134675\nbetikn 400246583\nghaurm3 400261852\n\n");
     // create 5 threads
     pthread_t thr1, thr2, thr3, thr4, thr5;
     int err;
