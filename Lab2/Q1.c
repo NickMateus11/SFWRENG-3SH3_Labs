@@ -95,19 +95,19 @@ int main()
     
     // run 4th and 5th threads on same function CONCURRENTLY-------------------------------------------------------------------------
     printf("\nTEST 4:\n");
-     printf("Thread 4 executing...\n");
+    printf("Thread 4 executing...\n");
     err = pthread_create(&thr4, NULL, &fun1, NULL);
     if (err != 0)
         perror("Thread 4 couldn't be created!\n");
     
-     printf("Thread 5 executing...\n");
+    printf("Thread 5 executing...\n");
     err = pthread_create(&thr5, NULL, &fun1, NULL);
     if (err != 0)
         perror("Thread 5 couldn't be created!\n");
     
     pthread_join(thr4, NULL);
     printf("Thread 4 done executing\n");
-     pthread_join(thr5, NULL);
+    pthread_join(thr5, NULL);
     printf("Thread 5 done executing\n");
     
     exit(0);
@@ -119,7 +119,7 @@ Global variables are accessible by any function in the process. Since threads sh
 they can access this same global variable. Local variables are accessible only within the function they are declared. Static variables
 (declared locally) are similar to local variables, except they retain their value from the previous execution of the function.
 
-What we have done in this program is create 1 global variable, 1 local static variable, and 1 local static variable. We also created
+What we have done in this program is create 1 global variable, 1 local static variable, and 1 local variable. We also created
 two functions that update each of these variables. Each of these variables are type 'int' and are incremented when a function is executed.
 We then created 5 threads to experiment with and demonstrate the differences between these variables as mentioned above:
 
@@ -134,6 +134,7 @@ OUTCOME: we see that once again the global variable retains its value from the p
          we see that the local variable still remains as 1 (because it is reset each function call).
         
 experiment 3: execute function 1 with threads 4 and 5 running concurrently.
-OUTCOME: SAME AS PREVIOUS EXPERIMENTS BUT WHY? SHOULDN'T THIS BE RACE CONDITION, THEY'RE TRYING TO ACCESS SAME VARIABLES AT SAME TIME?
-
+OUTCOME: we see that once again the global variable retains its value from the previous calls going from 6 to 8.
+         we see that the static variable also retains its values from previous calls going from 4 to 6.
+         we see that the local variable still remains as 1 (because it is reset each function call).
 */
