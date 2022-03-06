@@ -76,7 +76,7 @@ void* main(int argc, char **argv) {
     for (int i=0; i<numConsumers; i++)    
         pthread_create(&consumer, NULL, remove_item, arr);
 
-    sem_post(&mutex); // allow threads to begin releasing the lock
+    sem_post(&mutex); // allow threads to begin by releasing the lock
 
     printf("MAIN: Sleeping for: %d\r\n", sleep_time);
     sleep(sleep_time);    
