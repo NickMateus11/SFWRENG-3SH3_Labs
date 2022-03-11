@@ -79,8 +79,9 @@ void release(int start, linkedList *list){
     ptr->type = hole;
 }
 
-void compact(){
-
+void compact(linkedList *list){
+    // combine adjacent holes
+    // free new unused ptrs
 }
 
 void status(linkedList *list){
@@ -109,6 +110,8 @@ int main(int argc, char ** argv){
 
     release(8, &maintainer);
     status(&maintainer);
+
+    compact(&maintainer);
 
     return 0;
 }
