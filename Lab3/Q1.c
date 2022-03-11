@@ -24,19 +24,19 @@ typedef struct linkedList{
 
 
 void allocate(int size, linkedList *list, allocation_mode mode){
-    // mode = 0 (first fit), 1 (best fit), 2 (worst fit)
-
     linkedList *ptr = list;
     switch (mode){
         case first_fit:
             while (ptr != NULL){
-                if (ptr->size >= size){ // found fit
-                    // create a record for the remaining hole that is created
-                    ptr->next = (linkedList *) malloc(sizeof(linkedList));
-                    ptr->next->type  = hole;
-                    ptr->next->size  = ptr->size - size;
-                    ptr->next->start = ptr->start + size;
-                    ptr->next->next  = NULL;
+                if (ptr->size >= size && ptr->type==hole){ // found fit
+                    if ( ptr->size > size){ // if remaining hole is > 0
+                        // create a record for the remaining hole that is created
+                        ptr->next = (linkedList *) malloc(sizeof(linkedList));
+                        ptr->next->type  = hole;
+                        ptr->next->size  = ptr->size - size;
+                        ptr->next->start = ptr->start + size;
+                        ptr->next->next  = NULL;
+                    }
 
                     // occupy this spot
                     ptr->type = process;
@@ -108,7 +108,7 @@ int main(int argc, char ** argv){
     allocate(1024, &maintainer, first_fit);
     status(&maintainer);
 
-    release(8, &maintainer);
+    release(0, &maintainer);
     status(&maintainer);
 
     compact(&maintainer);
