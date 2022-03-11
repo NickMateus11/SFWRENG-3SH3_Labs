@@ -38,6 +38,7 @@ void *fun2(void *arg)
 
 int main()
 {
+    printf("mateusn 400134675\nbetikn 400246583\nghaurm3 400261852\n\n");
     // create 5 threads
     pthread_t thr1, thr2, thr3, thr4, thr5;
     int err;
@@ -46,7 +47,7 @@ int main()
     printf("All variables (global, static, and local) initially set to 0\n");
     
     // run 1st thread---------------------------------------------------------------------------------------------------------------
-    printf("\nTEST 1:\n");
+    printf("\nEXPERIMENT 1:\n");
     printf("Thread 1 executing...\n");
     err = pthread_create(&thr1, NULL, &fun1, NULL);
     if (err != 0)
@@ -62,7 +63,6 @@ int main()
     printf("Thread 1 done executing\n");
     
     // run 2nd thread-----------------------------------------------------------------------------------------------------------------
-    printf("\nTEST 2:\n");
     printf("Thread 2 executing...\n");
     err = pthread_create(&thr2, NULL, &fun2, NULL);
     if (err != 0)
@@ -78,7 +78,7 @@ int main()
     printf("Thread 2 done executing\n");
     
     // run 3rd and 4th threads on same function EXCLUSIVELY--------------------------------------------------------------------------
-    printf("\nTEST 3:\n");
+    printf("\nEXPERIMNT 2:\n");
     printf("Thread 3 executing...\n");
     err = pthread_create(&thr3, NULL, &fun1, NULL);
     if (err != 0)
@@ -94,7 +94,7 @@ int main()
     printf("Thread 4 done executing\n");
     
     // run 4th and 5th threads on same function CONCURRENTLY-------------------------------------------------------------------------
-    printf("\nTEST 4:\n");
+    printf("\nEXPERIMENT 3:\n");
     printf("Thread 4 executing...\n");
     err = pthread_create(&thr4, NULL, &fun1, NULL);
     if (err != 0)
