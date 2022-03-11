@@ -1,8 +1,10 @@
 
 CC=gcc
+SOURCES=Q1.c
+EXECUTABLE=Q1.exe
 
 all:
-	$(CC) -o Q1.exe Q1.c
+	$(CC) -o $(EXECUTABLE) $(SOURCES)
 
 clean:
 	rm *.exe
