@@ -1,11 +1,3 @@
-/******************************************************************************
-
-Welcome to GDB Online.
-GDB online is an online compiler and debugger tool for C, C++, Python, PHP, Ruby, 
-C#, VB, Perl, Swift, Prolog, Javascript, Pascal, HTML, CSS, JS
-Code, Compile, Run and Debug online from anywhere in world.
-
-*******************************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -164,18 +156,30 @@ void status(linkedList *list){
     printf("\n");
 }
 
-void fill(linkedList *list) {
+void fill(linkedList *list){
+    srand(1);
+    int bytes_filled = 0;
+    int fill_size;
+    while(bytes_filled < MAX_BYTES){
+        fill_size = (rand()%MAX_BLOCK_FACTOR + 1) * MIN_BLOCK; 
+        int res = allocate(fill_size, list, first_fit);
+        if (res) {
+            bytes_filled+=fill_size;
+        }
+    }
+}
+
+void fill_V2(linkedList *list) {
     srand(1);
     int val = 1;
     do {
         val = (rand() % 256) * 4;
-        allocate(val, list,  first_fit);
-    } while (allocate(val, list,  first_fit)); // this is probably a bad way to do it
+    } while (allocate(val, list,  first_fit)); 
 }
 
-void traverse_remove(linkedList *list, int div){
+void traverse_remove(linkedList *list, int reduce){
     linkedList* ptr = list;
-    int remove = round(ptr->num / div); // number of processes to remove
+    int remove = round(ptr->num / reduce); // number of processes to remove
     int i = 0;
     while (i<remove){
         int crawl = rand() % 24;
@@ -191,7 +195,7 @@ void traverse_remove(linkedList *list, int div){
             }
         }
         release(ptr->start, ptr); // remove process
-        printf("removed process at %d", ptr->start);
+        printf("removed process at %d\n", ptr->start);
         i++;
     }
 }
@@ -216,14 +220,18 @@ int main(int argc, char ** argv){
 
     release(0, &maintainer);
     release(8, &maintainer);
-    release(1032, &maintainer);*/ 
+    release(1032, &maintainer);*/
     
     // part b)
     fill(&maintainer);
+    printf("status after filling: \n\n");
     status(&maintainer);
 
+
     // part c)
-    traverse_remove(&maintainer, 10);
+    int reduction = 2;
+    traverse_remove(&maintainer, reduction);
+    printf("status after removing %d percent: \n\n", (100/reduction));
     status(&maintainer);
 
     // fill memory
@@ -238,7 +246,16 @@ int main(int argc, char ** argv){
     // }
 
     compact(&maintainer);
+    printf("status after compacting: \n\n");
     status(&maintainer);
 
     return 0;
 }
+
+// EVALUATION METRICS:
+/*
+- number of holes at completion
+- amount of unused memory at completion
+- average size of hole & number of holes after each allocation 
+*/
+
