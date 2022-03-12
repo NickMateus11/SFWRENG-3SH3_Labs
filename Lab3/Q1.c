@@ -118,9 +118,9 @@ void release(int start, linkedList *list){
 }
 
 void compact(linkedList *list){
-    // combine adjacent holes
+    // TODO: combine adjacent holes
 
-    // free newly unused ptrs
+    // TODO: free newly unused ptrs
 }
 
 void status(linkedList *list){
