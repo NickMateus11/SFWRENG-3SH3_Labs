@@ -1,10 +1,19 @@
+/******************************************************************************
+
+Welcome to GDB Online.
+GDB online is an online compiler and debugger tool for C, C++, Python, PHP, Ruby, 
+C#, VB, Perl, Swift, Prolog, Javascript, Pascal, HTML, CSS, JS
+Code, Compile, Run and Debug online from anywhere in world.
+
+*******************************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <math.h>
 
 #define MAX_BYTES           1048576 // 1MB  
 #define MIN_BLOCK           4096    // 4KB 
 #define MAX_BLOCK_FACTOR    25      // 25 * 4096 = 100KB
+
 
 typedef enum {
     hole=0,
@@ -21,6 +30,7 @@ typedef struct linkedList{
     mem_type type;
     int start;
     int size;
+    int num;
     struct linkedList *next;
 } linkedList;
 
@@ -46,6 +56,7 @@ int allocate(int size, linkedList *list, allocation_mode mode){
         while (ptr != NULL){
             if (ptr->size >= size && ptr->type==hole){ // found fit
                 _occupy_block(ptr, size);
+                list->num++;
                 break;
             }
             ptr = ptr->next;
@@ -72,6 +83,7 @@ int allocate(int size, linkedList *list, allocation_mode mode){
         }
         // occupy best block
         _occupy_block(best_block_ptr, size);
+        list->num++;
     }
 
     else if (mode == worst_fit){
@@ -90,6 +102,7 @@ int allocate(int size, linkedList *list, allocation_mode mode){
         }
         // occupy best block
         _occupy_block(worst_block_ptr, size);
+        list->num++;
     }
 
     else{
@@ -115,9 +128,10 @@ void release(int start, linkedList *list){
 
     // "release" - no automatic compaction
     ptr->type = hole;
+    list->num--;
 }
 
-void compact(linkedList *list){
+void compact(linkedList *list){ 
     // TODO: combine adjacent holes
     linkedList *ptr=list, *next;
     linkedList *hole_start_ptr = NULL;
@@ -150,6 +164,38 @@ void status(linkedList *list){
     printf("\n");
 }
 
+void fill(linkedList *list) {
+    srand(1);
+    int val = 1;
+    do {
+        val = (rand() % 256) * 4;
+        allocate(val, list,  first_fit);
+    } while (allocate(val, list,  first_fit)); // this is probably a bad way to do it
+}
+
+void traverse_remove(linkedList *list, int div){
+    linkedList* ptr = list;
+    int remove = round(ptr->num / div); // number of processes to remove
+    int i = 0;
+    while (i<remove){
+        int crawl = rand() % 24;
+        int j = 0;
+        while (j<crawl){ // get to random process
+            printf("%d\n", ptr->start);
+            if (ptr->type == 1){
+                j++;
+            }
+            ptr = ptr->next;
+            if (ptr == NULL){
+                ptr = list;
+            }
+        }
+        release(ptr->start, ptr); // remove process
+        printf("removed process at %d", ptr->start);
+        i++;
+    }
+}
+
 int main(int argc, char ** argv){
 
     // int *memory_region = calloc(MAX_BYTES, sizeof(int)); // don't actually need to allocate memory - just use the maintainer
@@ -157,20 +203,27 @@ int main(int argc, char ** argv){
         .type=hole,
         .start=0,
         .size=MAX_BYTES,
+        .num=0,
         .next=NULL
     };
 
     srand(1); // seed
 
-    allocate(8, &maintainer, first_fit);
+    /*allocate(8, &maintainer, first_fit);
     allocate(1024, &maintainer, first_fit);
     allocate(16, &maintainer, first_fit);
     status(&maintainer);
 
     release(0, &maintainer);
     release(8, &maintainer);
-    release(1032, &maintainer);
+    release(1032, &maintainer);*/ 
+    
+    // part b)
+    fill(&maintainer);
     status(&maintainer);
+
+    // part c)
+    traverse_remove(&maintainer, 10);
 
     // fill memory
     // int bytes_filled = 0;
