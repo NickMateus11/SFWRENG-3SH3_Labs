@@ -24,6 +24,7 @@ typedef struct linkedList{
     struct linkedList *next;
 } linkedList;
 
+// function to split a block into an allocated and remaining hole partition
 void _occupy_block(linkedList *list_item, int size){
     if (list_item->size > size){ // if remaining hole is > 0
         // create a record for the remaining hole that is created
@@ -118,7 +119,8 @@ void release(int start, linkedList *list){
 
 void compact(linkedList *list){
     // combine adjacent holes
-    // free new unused ptrs
+
+    // free newly unused ptrs
 }
 
 void status(linkedList *list){
@@ -146,7 +148,7 @@ int main(int argc, char ** argv){
     int bytes_filled = 0;
     int fill_size;
     while(bytes_filled < MAX_BYTES){
-        fill_size = (rand()%MAX_BLOCK_FACTOR + 1 ) * MIN_BLOCK; 
+        fill_size = (rand()%MAX_BLOCK_FACTOR + 1) * MIN_BLOCK; 
         int res = allocate(fill_size, &maintainer, first_fit);
         if (res) {
             bytes_filled+=fill_size;
