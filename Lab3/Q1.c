@@ -119,8 +119,26 @@ void release(int start, linkedList *list){
 
 void compact(linkedList *list){
     // TODO: combine adjacent holes
-
-    // TODO: free newly unused ptrs
+    linkedList *ptr=list, *next;
+    linkedList *hole_start_ptr = NULL;
+    int hole_count=0;
+    while (ptr != NULL){
+        next = ptr->next;
+        if(ptr->type==hole){
+            if (hole_count==0){ // save ptr to hole
+                hole_start_ptr = ptr;
+            }
+            else{ // consume the data - and free the block
+                hole_start_ptr->next = ptr->next; // set hole start next to the current next
+                hole_start_ptr->size += ptr->size; // increase hole start by current size
+                free(ptr); // free the memory at this pointer
+            }
+            hole_count++;
+        } else{ // process
+            hole_count = 0; // reset hole counter
+        }
+        ptr = next;
+    }
 }
 
 void status(linkedList *list){
@@ -144,17 +162,28 @@ int main(int argc, char ** argv){
 
     srand(1); // seed
 
-    // fill memory
-    int bytes_filled = 0;
-    int fill_size;
-    while(bytes_filled < MAX_BYTES){
-        fill_size = (rand()%MAX_BLOCK_FACTOR + 1) * MIN_BLOCK; 
-        int res = allocate(fill_size, &maintainer, first_fit);
-        if (res) {
-            bytes_filled+=fill_size;
-        }
-    }
+    allocate(8, &maintainer, first_fit);
+    allocate(1024, &maintainer, first_fit);
+    allocate(16, &maintainer, first_fit);
+    status(&maintainer);
 
+    release(0, &maintainer);
+    release(8, &maintainer);
+    release(1032, &maintainer);
+    status(&maintainer);
+
+    // fill memory
+    // int bytes_filled = 0;
+    // int fill_size;
+    // while(bytes_filled < MAX_BYTES){
+    //     fill_size = (rand()%MAX_BLOCK_FACTOR + 1) * MIN_BLOCK; 
+    //     int res = allocate(fill_size, &maintainer, first_fit);
+    //     if (res) {
+    //         bytes_filled+=fill_size;
+    //     }
+    // }
+
+    compact(&maintainer);
     status(&maintainer);
 
     return 0;
