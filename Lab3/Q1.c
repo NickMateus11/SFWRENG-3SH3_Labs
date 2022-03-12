@@ -2,7 +2,9 @@
 #include <stdlib.h>
 
 
-#define MAX_BYTES   1048576 // 1MB   
+#define MAX_BYTES           1048576 // 1MB  
+#define MIN_BLOCK           4096    // 4KB 
+#define MAX_BLOCK_FACTOR    25      // 25 * 4096 = 100KB
 
 typedef enum {
     hole=0,
@@ -22,44 +24,79 @@ typedef struct linkedList{
     struct linkedList *next;
 } linkedList;
 
-
-void allocate(int size, linkedList *list, allocation_mode mode){
-    linkedList *ptr = list;
-    switch (mode){
-        case first_fit:
-            while (ptr != NULL){
-                if (ptr->size >= size && ptr->type==hole){ // found fit
-                    if ( ptr->size > size){ // if remaining hole is > 0
-                        // create a record for the remaining hole that is created
-                        ptr->next = (linkedList *) malloc(sizeof(linkedList));
-                        ptr->next->type  = hole;
-                        ptr->next->size  = ptr->size - size;
-                        ptr->next->start = ptr->start + size;
-                        ptr->next->next  = NULL;
-                    }
-
-                    // occupy this spot
-                    ptr->type = process;
-                    ptr->size = size;
-                    break;
-                }
-                ptr = ptr->next;
-            }
-            if (ptr==NULL) { // no spot could be found
-                printf("NO Available spot found\n");
-                exit(1);
-            }
-            break;
-        case best_fit:
-            break;
-        case worst_fit:
-            break;
-
-        default:
-            printf("Not a valid allocation mode!\n");
-            exit(1);
-            break;
+void _occupy_block(linkedList *list_item, int size){
+    if (list_item->size > size){ // if remaining hole is > 0
+        // create a record for the remaining hole that is created
+        list_item->next = (linkedList *) malloc(sizeof(linkedList));
+        list_item->next->type  = hole;
+        list_item->next->size  = list_item->size - size;
+        list_item->next->start = list_item->start + size;
+        list_item->next->next  = NULL;
     }
+
+    // occupy this spot
+    list_item->type = process;
+    list_item->size = size;
+}
+
+int allocate(int size, linkedList *list, allocation_mode mode){
+    if (mode == first_fit){
+        linkedList *ptr = list;
+        while (ptr != NULL){
+            if (ptr->size >= size && ptr->type==hole){ // found fit
+                _occupy_block(ptr, size);
+                break;
+            }
+            ptr = ptr->next;
+        }
+        if (ptr==NULL) { // no spot could be found
+            printf("NO Available spot found\n");
+            return 0;
+        }
+    }
+
+    else if (mode == best_fit){
+        linkedList *best_block_ptr=NULL, *ptr=list;
+        int best_block_size = MAX_BYTES+1;
+        while(ptr != NULL){
+            if ((ptr->type)==hole && (ptr->size)>=size && (ptr->size)<best_block_size) {// better block found
+                best_block_ptr = ptr;
+                best_block_size = ptr->size;
+            }
+            ptr = ptr->next;
+        }
+        if (best_block_ptr == NULL) { // nothing found
+            printf("NO Available spot found\n");
+            return 0;
+        }
+        // occupy best block
+        _occupy_block(best_block_ptr, size);
+    }
+
+    else if (mode == worst_fit){
+        linkedList *worst_block_ptr=NULL, *ptr=list;
+        int worst_block_size = 0;
+        while(ptr != NULL){
+            if ((ptr->type)==hole && (ptr->size)>=size && (ptr->size)>worst_block_size) {// worse block found
+                worst_block_ptr = ptr;
+                worst_block_size = ptr->size;
+            }
+            ptr = ptr->next;
+        }
+        if (worst_block_ptr == NULL) { // nothing found
+            printf("NO Available spot found\n");
+            return 0;
+        }
+        // occupy best block
+        _occupy_block(worst_block_ptr, size);
+    }
+
+    else{
+        printf("Not a valid allocation mode!\n");
+        exit(1);
+    }
+
+    return 1;
 }
 
 void release(int start, linkedList *list){
@@ -95,7 +132,7 @@ void status(linkedList *list){
 
 int main(int argc, char ** argv){
 
-    // int *memory_region = calloc(MAX_BYTES, sizeof(int)); // don't actuall need to allocate memory - just use the maintainer
+    // int *memory_region = calloc(MAX_BYTES, sizeof(int)); // don't actually need to allocate memory - just use the maintainer
     linkedList maintainer = {
         .type=hole,
         .start=0,
@@ -103,15 +140,20 @@ int main(int argc, char ** argv){
         .next=NULL
     };
 
+    srand(1); // seed
 
-    allocate(8, &maintainer, first_fit);
-    allocate(1024, &maintainer, first_fit);
+    // fill memory
+    int bytes_filled = 0;
+    int fill_size;
+    while(bytes_filled < MAX_BYTES){
+        fill_size = (rand()%MAX_BLOCK_FACTOR + 1 ) * MIN_BLOCK; 
+        int res = allocate(fill_size, &maintainer, first_fit);
+        if (res) {
+            bytes_filled+=fill_size;
+        }
+    }
+
     status(&maintainer);
-
-    release(0, &maintainer);
-    status(&maintainer);
-
-    compact(&maintainer);
 
     return 0;
 }
