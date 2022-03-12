@@ -224,6 +224,7 @@ int main(int argc, char ** argv){
 
     // part c)
     traverse_remove(&maintainer, 10);
+    status(&maintainer);
 
     // fill memory
     // int bytes_filled = 0;
