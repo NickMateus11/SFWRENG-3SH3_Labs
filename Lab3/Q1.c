@@ -22,7 +22,6 @@ typedef struct linkedList{
     mem_type type;
     int start;
     int size;
-    int num;
     struct linkedList *next;
 } linkedList;
 
@@ -30,11 +29,13 @@ typedef struct linkedList{
 void _occupy_block(linkedList *list_item, int size){
     if (list_item->size > size){ // if remaining hole is > 0
         // create a record for the remaining hole that is created
-        list_item->next = (linkedList *) malloc(sizeof(linkedList));
-        list_item->next->type  = hole;
-        list_item->next->size  = list_item->size - size;
-        list_item->next->start = list_item->start + size;
-        list_item->next->next  = NULL;
+        linkedList *newHole = (linkedList *) malloc(sizeof(linkedList));
+        newHole->type  = hole;
+        newHole->size  = list_item->size - size;
+        newHole->start = list_item->start + size;
+        newHole->next  = list_item->next;
+
+        list_item->next = newHole;
     }
 
     // occupy this spot
@@ -48,7 +49,6 @@ int allocate(int size, linkedList *list, allocation_mode mode){
         while (ptr != NULL){
             if (ptr->size >= size && ptr->type==hole){ // found fit
                 _occupy_block(ptr, size);
-                list->num++;
                 break;
             }
             ptr = ptr->next;
@@ -75,7 +75,6 @@ int allocate(int size, linkedList *list, allocation_mode mode){
         }
         // occupy best block
         _occupy_block(best_block_ptr, size);
-        list->num++;
     }
 
     else if (mode == worst_fit){
@@ -94,7 +93,6 @@ int allocate(int size, linkedList *list, allocation_mode mode){
         }
         // occupy best block
         _occupy_block(worst_block_ptr, size);
-        list->num++;
     }
 
     else{
@@ -120,7 +118,6 @@ void release(int start, linkedList *list){
 
     // "release" - no automatic compaction
     ptr->type = hole;
-    list->num--;
 }
 
 void compact(linkedList *list){ 
@@ -156,9 +153,29 @@ void status(linkedList *list){
     printf("\n");
 }
 
-void fill(linkedList *list){
+int bytes_occupied(linkedList *list){
+    int byte_count = 0;
+    linkedList *ptr = list;
+    while(ptr != NULL){
+        if (ptr->type == process) byte_count += ptr->size;
+        ptr = ptr->next;
+    }
+    return byte_count;
+}
+
+int blocks_occupied(linkedList *list){
+    int process_count = 0;
+    linkedList *ptr = list;
+    while(ptr != NULL){
+        if (ptr->type == process) process_count += 1;
+        ptr = ptr->next;
+    }
+    return process_count;
+}
+
+void fill_all(linkedList *list){
     srand(1);
-    int bytes_filled = 0;
+    int bytes_filled = bytes_occupied(list);
     int fill_size;
     while(bytes_filled < MAX_BYTES){
         fill_size = (rand()%MAX_BLOCK_FACTOR + 1) * MIN_BLOCK; 
@@ -169,81 +186,78 @@ void fill(linkedList *list){
     }
 }
 
-void fill_V2(linkedList *list) {
+void fill_until_first_failure(linkedList *list, allocation_mode mode) {
     srand(1);
-    int val = 1;
-    do {
-        val = (rand() % 256) * 4;
-    } while (allocate(val, list,  first_fit)); 
+    int fill_size = (rand()%MAX_BLOCK_FACTOR + 1) * MIN_BLOCK;
+    int count = 0;
+    while (allocate(fill_size, list, mode)){
+        fill_size = (rand()%MAX_BLOCK_FACTOR + 1) * MIN_BLOCK;
+        count++;
+    }
+    // print count - reminder: new holes are created when allocating,
+    // so count may be larger than the number of holes available when
+    // this function is first called
+    printf("Filled - %d - holes\n", count);
 }
 
-void traverse_remove(linkedList *list, int reduce){
+void random_release(linkedList *list, int release_count){
+    srand(1);
     linkedList* ptr = list;
-    int remove = round(ptr->num / reduce); // number of processes to remove
-    int i = 0;
-    while (i<remove){
-        int crawl = rand() % 24;
-        int j = 0;
-        while (j<crawl){ // get to random process
-            printf("%d\n", ptr->start);
-            if (ptr->type == 1){
-                j++;
+    int num_blocks_occupied = blocks_occupied(list);
+    int count = 0;
+    while(count != release_count){
+        // select random block to remove
+        int block_to_remove = rand()%num_blocks_occupied;
+        int i=0;
+        // locate block
+        while(1){
+            if (ptr->type == process) {
+                if (i==block_to_remove){
+                    // release block
+                    release(ptr->start, list);
+                    break;
+                }
+                i++;
             }
-            ptr = ptr->next;
-            if (ptr == NULL){
-                ptr = list;
-            }
+            ptr = ptr->next;               
         }
-        release(ptr->start, ptr); // remove process
-        printf("removed process at %d\n", ptr->start);
-        i++;
+        // update values
+        count++;
+        ptr = list;
+        num_blocks_occupied--;
     }
+    printf("Removed - %d - processes\n", release_count);
 }
 
 int main(int argc, char ** argv){
 
     // int *memory_region = calloc(MAX_BYTES, sizeof(int)); // don't actually need to allocate memory - just use the maintainer
+    
     linkedList maintainer = {
         .type=hole,
         .start=0,
         .size=MAX_BYTES,
-        .num=0,
         .next=NULL
     };
 
     srand(1); // seed
 
-    /*allocate(8, &maintainer, first_fit);
-    allocate(1024, &maintainer, first_fit);
-    allocate(16, &maintainer, first_fit);
+    // // part b)
+    fill_all(&maintainer);
+    printf("status after filling:\n");
     status(&maintainer);
 
-    release(0, &maintainer);
-    release(8, &maintainer);
-    release(1032, &maintainer);*/
-    
-    // part b)
-    fill(&maintainer);
-    printf("status after filling: \n\n");
+    // // part c)
+    float remove_factor = 0.5f;
+    int num_to_release = (int)(blocks_occupied(&maintainer)*remove_factor);
+    random_release(&maintainer, num_to_release);
+    printf("status after random release:\n");
     status(&maintainer);
 
-
-    // part c)
-    int reduction = 2;
-    traverse_remove(&maintainer, reduction);
-    printf("status after removing %d percent: \n\n", (100/reduction));
+    // re-fill until failure
+    fill_until_first_failure(&maintainer, first_fit);
+    printf("status after re-fill:\n");
     status(&maintainer);
-
-    // fill memory
-    // int bytes_filled = 0;
-    // int fill_size;
-    // while(bytes_filled < MAX_BYTES){
-    //     fill_size = (rand()%MAX_BLOCK_FACTOR + 1) * MIN_BLOCK; 
-    //     int res = allocate(fill_size, &maintainer, first_fit);
-    //     if (res) {
-    //         bytes_filled+=fill_size;
-    //     }
-    // }
 
     compact(&maintainer);
     printf("status after compacting: \n\n");
