@@ -45,6 +45,34 @@ void _occupy_block(linkedList *list_item, int size){
     list_item->size = size;
 }
 
+void compact_adj(linkedList *list){ 
+    // TODO: combine adjacent holes
+    linkedList *ptr=list, *next;
+    linkedList *hole_start_ptr = NULL;
+    int hole_count=0;
+    while (ptr != NULL){
+        next = ptr->next;
+        if(ptr->type==hole){
+            if (hole_count==0){ // save ptr to hole
+                hole_start_ptr = ptr;
+            }
+            else{ // consume the data - and free the block
+                hole_start_ptr->next = ptr->next; // set hole start next to the current next
+                hole_start_ptr->size += ptr->size; // increase hole start by current size
+                free(ptr); // free the memory at this pointer
+            }
+            hole_count++;
+        } else{ // process
+            hole_count = 0; // reset hole counter
+        }
+        ptr = next;
+    }
+}
+
+void compact(linkedList *list){
+
+}
+
 int allocate(int size, linkedList *list, allocation_mode mode){
     if (mode == first_fit){
         linkedList *ptr = list;
@@ -118,38 +146,15 @@ void release(int start, linkedList *list){
         ptr = ptr->next;
     }
 
-    // "release" - no automatic compaction
+    // "release"
     ptr->type = hole;
-}
-
-void compact(linkedList *list){ 
-    // TODO: combine adjacent holes
-    linkedList *ptr=list, *next;
-    linkedList *hole_start_ptr = NULL;
-    int hole_count=0;
-    while (ptr != NULL){
-        next = ptr->next;
-        if(ptr->type==hole){
-            if (hole_count==0){ // save ptr to hole
-                hole_start_ptr = ptr;
-            }
-            else{ // consume the data - and free the block
-                hole_start_ptr->next = ptr->next; // set hole start next to the current next
-                hole_start_ptr->size += ptr->size; // increase hole start by current size
-                free(ptr); // free the memory at this pointer
-            }
-            hole_count++;
-        } else{ // process
-            hole_count = 0; // reset hole counter
-        }
-        ptr = next;
-    }
+    compact_adj(list);
 }
 
 void status(linkedList *list){
     linkedList *ptr = list;
     while(ptr != NULL){
-        // printf("TYPE:%d,\t\tSTART:%d,\tSIZE:%d\n",ptr->type, ptr->start, ptr->size);
+        printf("TYPE:%d,\t\tSTART:%d,\tSIZE:%d\n",ptr->type, ptr->start, ptr->size);
         ptr = ptr->next;
     }
     printf("\n");
