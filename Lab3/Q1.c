@@ -7,6 +7,7 @@
 #define MIN_BLOCK           4096    // 4KB 
 #define MAX_BLOCK_FACTOR    25      // 25 * 4096 = 100KB
 
+#define SEED                1
 
 typedef enum {
     hole=0,
@@ -55,7 +56,7 @@ int allocate(int size, linkedList *list, allocation_mode mode){
             ptr = ptr->next;
         }
         if (ptr==NULL) { // no spot could be found
-            printf("NO Available spot found\n");
+            // printf("NO Available spot found\n");
             return 0;
         }
     }
@@ -71,7 +72,7 @@ int allocate(int size, linkedList *list, allocation_mode mode){
             ptr = ptr->next;
         }
         if (best_block_ptr == NULL) { // nothing found
-            printf("NO Available spot found\n");
+            // printf("NO Available spot found\n");
             return 0;
         }
         // occupy best block
@@ -89,7 +90,7 @@ int allocate(int size, linkedList *list, allocation_mode mode){
             ptr = ptr->next;
         }
         if (worst_block_ptr == NULL) { // nothing found
-            printf("NO Available spot found\n");
+            // printf("NO Available spot found\n");
             return 0;
         }
         // occupy best block
@@ -148,7 +149,7 @@ void compact(linkedList *list){
 void status(linkedList *list){
     linkedList *ptr = list;
     while(ptr != NULL){
-        printf("TYPE:%d,\t\tSTART:%d,\tSIZE:%d\n",ptr->type, ptr->start, ptr->size);
+        // printf("TYPE:%d,\t\tSTART:%d,\tSIZE:%d\n",ptr->type, ptr->start, ptr->size);
         ptr = ptr->next;
     }
     printf("\n");
@@ -174,11 +175,22 @@ int blocks_occupied(linkedList *list){
     return process_count;
 }
 
+int num_holes(linkedList *list){
+    int holes = 0;
+    linkedList *ptr = list;
+    while(ptr != NULL){
+        if (ptr->type == hole) holes += 1;
+        ptr = ptr->next;
+    }
+    return holes;
+}
+
 void fill_all(linkedList *list){
     // generate new seed
-    time_t t;
-    srand(time(&t));
-    
+    // time_t t;
+    // srand(time(&t));
+    srand(SEED+1);
+
     int bytes_filled = bytes_occupied(list);
     int fill_size;
     while(bytes_filled < MAX_BYTES){
@@ -191,7 +203,7 @@ void fill_all(linkedList *list){
 }
 
 void fill_until_first_failure(linkedList *list, allocation_mode mode) {
-    srand(1);
+    srand(SEED+2);
     int fill_size = (rand()%MAX_BLOCK_FACTOR + 1) * MIN_BLOCK;
     int count = 0;
     while (allocate(fill_size, list, mode)){
@@ -205,7 +217,7 @@ void fill_until_first_failure(linkedList *list, allocation_mode mode) {
 }
 
 void random_release(linkedList *list, int release_count){
-    srand(1);
+    srand(SEED+3);
     linkedList* ptr = list;
     int num_blocks_occupied = blocks_occupied(list);
     int count = 0;
@@ -233,39 +245,135 @@ void random_release(linkedList *list, int release_count){
     printf("Removed - %d - processes\n", release_count);
 }
 
+float avg_hole_size(linkedList *list){
+    int n = num_holes(list);
+    float avg = 0;
+    linkedList *ptr=list;
+    while(ptr != NULL){
+        if (ptr->type == hole){
+            avg += ptr->size;
+        }
+        ptr =ptr->next;
+    }
+    return avg/n;
+}
+
 int main(int argc, char ** argv){
 
+    // // part a)
     // int *memory_region = calloc(MAX_BYTES, sizeof(int)); // don't actually need to allocate memory - just use the maintainer
     
-    linkedList maintainer = {
+    linkedList default_maintainer = {
         .type=hole,
         .start=0,
         .size=MAX_BYTES,
         .next=NULL
     };
 
-    srand(1); // seed
+/*********************************************/
+// NO COMPACTION
+
+    printf("\n\n***** WITHOUT COMPACTION *****\n\n");
+
+    linkedList  maintainer_first_fit = default_maintainer, 
+                maintainer_best_fit  = default_maintainer, 
+                maintainer_worst_fit = default_maintainer; 
 
     // // part b)
-    fill_all(&maintainer);
+    fill_all(&maintainer_first_fit);
+    fill_all(&maintainer_best_fit);
+    fill_all(&maintainer_worst_fit);
     printf("status after filling:\n");
-    status(&maintainer);
+    status(&maintainer_first_fit);
 
     // // part c)
     float remove_factor = 0.5f;
-    int num_to_release = (int)(blocks_occupied(&maintainer)*remove_factor);
-    random_release(&maintainer, num_to_release);
+    int num_to_release = (int)(blocks_occupied(&maintainer_first_fit)*remove_factor);
+    random_release(&maintainer_first_fit, num_to_release);
+    random_release(&maintainer_best_fit, num_to_release);
+    random_release(&maintainer_worst_fit, num_to_release);
     printf("status after random release:\n");
-    status(&maintainer);
+
+    // // part d)
+    status(&maintainer_first_fit);
+
+    // // part e)
+    printf("FIRST FIT:\n");
+    printf("status after re-fill:\n");
+    fill_until_first_failure(&maintainer_first_fit, first_fit);
+    printf("average hole size: %0.2f\n", avg_hole_size(&maintainer_first_fit));
+    printf("Num holes: %d\n", num_holes(&maintainer_first_fit));
+    status(&maintainer_first_fit);
+
+    printf("BEST FIT:\n");
+    printf("status after re-fill:\n");
+    fill_until_first_failure(&maintainer_best_fit, best_fit);
+    printf("average hole size: %0.2f\n", avg_hole_size(&maintainer_best_fit));
+    printf("Num holes: %d\n", num_holes(&maintainer_best_fit));
+    status(&maintainer_best_fit);
+
+    printf("WORST FIT:\n");
+    printf("status after re-fill:\n");
+    fill_until_first_failure(&maintainer_worst_fit, worst_fit);
+    printf("average hole size: %0.2f\n", avg_hole_size(&maintainer_worst_fit));
+    printf("Num holes: %d\n", num_holes(&maintainer_worst_fit));
+    status(&maintainer_worst_fit);
+
+/*********************************************/
+// COMPACTION
+
+    printf("\n\n***** WITH COMPACTION *****\n\n");
+
+    linkedList  maintainer_first_fit_compact = default_maintainer, 
+                maintainer_best_fit_compact  = default_maintainer, 
+                maintainer_worst_fit_compact = default_maintainer; 
+
+    // // part b)
+    fill_all(&maintainer_first_fit_compact);
+    fill_all(&maintainer_best_fit_compact);
+    fill_all(&maintainer_worst_fit_compact);
+    printf("status after filling:\n");
+    status(&maintainer_first_fit_compact);
+
+    // // part c)
+    remove_factor = 0.5f;
+    num_to_release = (int)(blocks_occupied(&maintainer_first_fit_compact)*remove_factor);
+    random_release(&maintainer_first_fit_compact, num_to_release);
+    random_release(&maintainer_best_fit_compact, num_to_release);
+    random_release(&maintainer_worst_fit_compact, num_to_release);
+    printf("status after random release:\n");
+
+    // // part d)
+    status(&maintainer_first_fit_compact);
+
+    // compaction
+    compact(&maintainer_first_fit_compact);
+    compact(&maintainer_best_fit_compact);
+    compact(&maintainer_worst_fit_compact);
+    printf("status after compacting:\n");
+    status(&maintainer_first_fit_compact);
 
     // re-fill until failure
-    fill_until_first_failure(&maintainer, first_fit);
+    printf("FIRST FIT:\n");
     printf("status after re-fill:\n");
-    status(&maintainer);
+    fill_until_first_failure(&maintainer_first_fit_compact, first_fit);
+    printf("average hole size: %0.2f\n", avg_hole_size(&maintainer_first_fit));
+    printf("Num holes: %d\n", num_holes(&maintainer_first_fit));
+    status(&maintainer_first_fit_compact);
 
-    compact(&maintainer);
-    printf("status after compacting: \n\n");
-    status(&maintainer);
+    printf("BEST FIT:\n");
+    printf("status after re-fill:\n");
+    fill_until_first_failure(&maintainer_best_fit_compact, best_fit);
+    printf("average hole size: %0.2f\n", avg_hole_size(&maintainer_best_fit_compact));
+    printf("Num holes: %d\n", num_holes(&maintainer_best_fit_compact));
+    status(&maintainer_best_fit_compact);
+
+    printf("WORST FIT:\n");
+    printf("status after re-fill:\n");
+    fill_until_first_failure(&maintainer_worst_fit_compact, worst_fit);
+    printf("average hole size: %0.2f\n", avg_hole_size(&maintainer_worst_fit_compact));
+    printf("Num holes: %d\n", num_holes(&maintainer_worst_fit_compact));
+    status(&maintainer_worst_fit_compact);
 
     return 0;
 }
