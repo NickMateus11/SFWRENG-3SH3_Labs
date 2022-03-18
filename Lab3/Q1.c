@@ -266,10 +266,3 @@ int main(int argc, char ** argv){
     return 0;
 }
 
-// EVALUATION METRICS:
-/*
-- number of holes at completion
-- amount of unused memory at completion
-- average size of hole & number of holes after each allocation 
-*/
-
