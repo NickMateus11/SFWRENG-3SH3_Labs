@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 
 #define MAX_BYTES           1048576 // 1MB  
 #define MIN_BLOCK           4096    // 4KB 
@@ -174,7 +175,10 @@ int blocks_occupied(linkedList *list){
 }
 
 void fill_all(linkedList *list){
-    srand(1);
+    // generate new seed
+    time_t t;
+    srand(time(&t));
+    
     int bytes_filled = bytes_occupied(list);
     int fill_size;
     while(bytes_filled < MAX_BYTES){
@@ -265,4 +269,3 @@ int main(int argc, char ** argv){
 
     return 0;
 }
-
