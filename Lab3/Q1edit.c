@@ -71,76 +71,59 @@ void compact_adj(linkedList *list){
 void compact(linkedList *list){
     linkedList *ptr=list;
     linkedList *next = NULL;
-    linkedList *swap = NULL;
+    
+    // new information
+    mem_type curr_type;
+    int curr_start = 0;
+    int curr_size;
     
     while(ptr != NULL){
         next = ptr->next;
         while(next != NULL){
-            /*if(ptr->type < next->type){ // swap process and hole so hole is in front
-                swap = ptr;
-                ptr->next = next->next; // swap the two nodes
-                next->next = ptr;
-                
-                ptr->start = next->start; 
-                //next->start = swap->start; 
-            }*/
-            // new idea: just swap information!
             
+            // push all holes to end
             if(ptr->type < next->type){
-                swap = ptr;
+                curr_type = ptr->type;
+                curr_start = ptr->start;
+                curr_size = ptr->size;
+                
                 ptr->type = next->type;
-                ptr->start = next->start;
                 ptr->size = next->size;
                 
-                next->type = swap->type;
-                next->start = swap->start;
-                next->size = swap->size;
+                next->type = curr_type;
+                next->start = curr_start + ptr->size;
+                next->size = curr_size;
             }
-            
-            printf("INSIDE\n");
             next = next->next;
         }
-        //printf("%d\n", swap->start);
-        printf("%d\n", ptr->start);
         ptr = ptr->next;
-        printf("OUTSIDE\n");
+    }
+    
+    ptr=list;
+    next = ptr->next;
+    linkedList *hole_ptr = NULL;
+    
+    while (next != NULL)
+    {
+        // compact holes at end
+        if (ptr->type==hole){
+            hole_ptr = ptr;
+            while (ptr->next != NULL){
+                ptr = ptr->next;
+                hole_ptr->size += ptr->size;
+                hole_ptr->next = NULL;
+            }
+            break;
+        }
+        
+        // reassign start addresses
+        else{ 
+            next->start = ptr->start + ptr->size;
+            ptr = ptr->next;
+            next = ptr->next;
+        }
     }
 }
-/*
-void compact(linkedList *list){
-    //printf("%d", list->next->type);
-    linkedList *ptr=list, *next;
-    linkedList *hole = NULL;
-    //printf("%d", ptr->next->type);
-    //linkedList *next=list->next;
-    next = ptr->next;
-    //printf("HELLO");
-    
-    while (next->next != NULL){ // don't wanna grab next next hole and get a NULL
-        printf("Current Node: %d\n", ptr->type);
-        printf("Next Node: %d\n", next->type);
-        // find the first hole to take control of
-        if (ptr->type==hole){
-            hole = ptr;
-        }
-        if(ptr->type==hole && next->type==process){ // current node is a hole followed by process, move hole ahead
-            ptr->start += next->size; // update hole start address
-            ptr->next = next->next; // set next node to process's next node 
-            
-            next->start = ptr->start; // update process's start (swapping with hole)
-            next->next = ptr;   // attach hole as next node after process
-        }
-        
-        else if(ptr->type==hole && next->type==hole){ // current and next nodes are holes, compact hole
-            ptr->next = next->next;
-            ptr->size += next->size;
-            free(next);
-        }
-        
-        ptr = ptr->next;
-        next = ptr->next;
-    }
-}*/
 
 int allocate(int size, linkedList *list, allocation_mode mode){
     if (mode == first_fit){
