@@ -70,7 +70,53 @@ void compact_adj(linkedList *list){
 }
 
 void compact(linkedList *list){
+    if (list == NULL) return;
 
+    // compact adjacent holes first - ensure hole run length is 1
+    compact_adj(list);
+
+    linkedList *ptr=list, *prev_ptr, *next_node;
+    int hole_size = 0;
+
+    // special case: first element is a hole
+    if (ptr != NULL && ptr->type==hole && ptr->next != NULL){
+        hole_size += ptr->size; //update hole size
+
+        linkedList *next_next = ptr->next->next;
+        ptr->type = ptr->next->type; // copy fields
+        ptr->size = ptr->next->size;
+        free(ptr->next); // free ptr        
+        ptr->next = next_next;
+    }
+
+    prev_ptr = ptr;
+    ptr = ptr->next;
+
+    while(ptr != NULL){
+        next_node = ptr->next;
+        if (ptr->type == hole){
+            hole_size += ptr->size; // save hole size
+            prev_ptr->next = next_node; // change prev's next to current next (skipping this node)
+            free(ptr); // free the memory
+        } else{ // node is a process
+            // shift start address by current hole size count
+            ptr->start -= hole_size; 
+
+            // only update prev_ptr if current node is a process
+            prev_ptr = ptr;
+        }
+        ptr = next_node;
+    }
+
+    // reached end of list
+    // create large contiguous hole
+    if (hole_size > 0){
+        prev_ptr->next = (linkedList *)malloc(sizeof(linkedList));
+        prev_ptr->next->type  = hole;
+        prev_ptr->next->size  = hole_size;
+        prev_ptr->next->start = prev_ptr->start + prev_ptr->size;
+        prev_ptr->next->next  = NULL;
+    }
 }
 
 int allocate(int size, linkedList *list, allocation_mode mode){
@@ -154,7 +200,7 @@ void release(int start, linkedList *list){
 void status(linkedList *list){
     linkedList *ptr = list;
     while(ptr != NULL){
-        printf("TYPE:%d,\t\tSTART:%d,\tSIZE:%d\n",ptr->type, ptr->start, ptr->size);
+        // printf("TYPE:%d,\t\tSTART:%d,\tSIZE:%d\n",ptr->type, ptr->start, ptr->size);
         ptr = ptr->next;
     }
     printf("\n");
@@ -252,6 +298,8 @@ void random_release(linkedList *list, int release_count){
 
 float avg_hole_size(linkedList *list){
     int n = num_holes(list);
+    if (n==0) return 0;
+
     float avg = 0;
     linkedList *ptr=list;
     while(ptr != NULL){
@@ -362,8 +410,8 @@ int main(int argc, char ** argv){
     printf("FIRST FIT:\n");
     printf("status after re-fill:\n");
     fill_until_first_failure(&maintainer_first_fit_compact, first_fit);
-    printf("average hole size: %0.2f\n", avg_hole_size(&maintainer_first_fit));
-    printf("Num holes: %d\n", num_holes(&maintainer_first_fit));
+    printf("average hole size: %0.2f\n", avg_hole_size(&maintainer_first_fit_compact));
+    printf("Num holes: %d\n", num_holes(&maintainer_first_fit_compact));
     status(&maintainer_first_fit_compact);
 
     printf("BEST FIT:\n");
