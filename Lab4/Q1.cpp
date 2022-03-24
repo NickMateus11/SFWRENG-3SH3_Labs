@@ -4,16 +4,67 @@
 #include <vector>
 
 
+void print_results(const std::vector<int> &ref_string, const std::vector<std::vector<int>> &state, const std::vector<bool> &faults){
+
+    // print ref string
+    std::cout << "  ";
+    for (int i=0; i<ref_string.size(); i++){
+        std::cout << ref_string[i] << "  ";
+    }
+    std::cout << std::endl;
+
+    // print formatting line ----
+    for(int i=0; i< ref_string.size()*3; i++){
+        std::cout << "-";
+    }
+    std::cout << std::endl;
+    
+    // print frame states
+    for (int i=0; i<state[i].size(); i++){
+        std::cout << " ";
+        for (int j=0; j<state.size(); j++){
+            if (state[j][i] != -1) std::cout << " ";
+            std::cout << state[j][i] << " ";
+        }
+        std::cout << std::endl;
+    }
+    
+    // print page-faults
+    std::cout << "  ";
+    int fault_count = 0;
+    for(int i=0; i<faults.size(); i++){
+        std::cout << (faults[i]? "p  ":"   ");
+        if (faults[i]) fault_count++;
+    }
+    std::cout << std::endl;
+
+    // print formatting line ----
+    for(int i=0; i< ref_string.size()*3; i++){
+        std::cout << "-";
+    }
+    std::cout << std::endl;
+
+    // print page fault count
+    std::cout << fault_count << " page-faults" << std::endl << std::endl;
+
+    return;
+}
+
 void FIFO(const std::vector<int> &page_refs, int num_frames){
     std::cout << "FIFO" << std::endl;
 
+    // store all states for printing later
+    std::vector<std::vector<int>> frame_state_all;
+    std::vector<bool> page_faults(page_refs.size(), false);
+    
+    // loop variables
     int page_fault_count = 0;
-    std::vector<int> frame_state(num_frames, -1);
+    std::vector<int> frame_state_current(num_frames, -1);    
     
     for (int i=0; i< page_refs.size(); i++){
         bool page_fault_occured = true;
         for (int j=0; j<num_frames; j++){
-            if (frame_state[j] == page_refs[i]){
+            if (frame_state_current[j] == page_refs[i]){
                 // page already loaded in a frame
                 page_fault_occured = false;
                 break; 
@@ -22,33 +73,28 @@ void FIFO(const std::vector<int> &page_refs, int num_frames){
         if (page_fault_occured){
             // page fault
             page_fault_count++;
+            page_faults[i] = true;
             // insert page into a frame - FIFO style
-            for (int j=frame_state.size(); j>0; j--){
+            for (int j=frame_state_current.size(); j>0; j--){
                 //shift
-                frame_state[j] = frame_state[j-1];
+                frame_state_current[j] = frame_state_current[j-1];
             }
-            frame_state[0] = page_refs[i];
+            frame_state_current[0] = page_refs[i];
         }
-    
-        // print result after this iteration
-        std::cout << " " << page_refs[i] << " | ";
-        for (int j=0; j<frame_state.size(); j++){
-            std::cout << frame_state[j] << " ";
-        }
-        if (page_fault_occured){
-            std::cout << "\tp";
-        }
-        std::cout << std::endl;
 
+        // save frame_state
+        frame_state_all.push_back(frame_state_current);
     }
 
-    std::cout << page_fault_count << " page-faults" << std::endl;
+    print_results(page_refs, frame_state_all, page_faults);
 
     return;
 }
+
 void optimal(std::vector<int> page_refs, int num_frames){
     return;
 }
+
 void LRU(std::vector<int> page_refs, int num_frames){
     return;
 }
@@ -92,7 +138,7 @@ int main(int argc, char **argv){
     for (int i=0; i<page_refs.size(); i++){
         std::cout << " " << page_refs[i];
     }
-    std::cout << std::endl;
+    std::cout << std::endl << std::endl;
 
     // Page Replacement Algorithms
 
