@@ -76,7 +76,7 @@ void FIFO(const std::vector<int> &page_refs, int num_frames){
             page_faults[i] = true;
             // insert page into a frame - FIFO style
             for (int j=frame_state_current.size(); j>0; j--){
-                //shift
+                // shift things down - this is why its called FIFO
                 frame_state_current[j] = frame_state_current[j-1];
             }
             frame_state_current[0] = page_refs[i];
