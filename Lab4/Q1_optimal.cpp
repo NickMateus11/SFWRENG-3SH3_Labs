@@ -2,6 +2,7 @@
 #include <string.h>
 #include <iostream>
 #include <vector>
+#include <algorithm>
 
 
 void print_results(const std::vector<int> &ref_string, const std::vector<std::vector<int>> &state, const std::vector<bool> &faults){
@@ -174,7 +175,91 @@ void optimal(std::vector<int> page_refs, int num_frames){
     return;
 }
 
+void printMatrix(std::vector<std::vector<int>> mat, int x, int y){
+    for(int i = 0; i < x; i++) {
+        for(int j = 0; j < y; j++) {
+            std::cout << mat[i][j] << " ";
+        }
+        std::cout << std::endl;
+    }
+}
+
+int checkLowest(std::vector<std::vector<int>> mat, int x, int y){
+
+    int sum = 0;
+    int lru = 0;
+    int val = y+1;
+
+    for (int i=0; i<y; i++){ // row
+        sum = 0;
+        for (int j=0; j<x; j++){ // column
+            sum += mat[i][j];
+        }
+        if (sum < val){ // check if the current row has been used less than the current least
+            lru = i; // set lru to updated least recently used
+            val = sum;
+        }
+    }
+
+    return lru;
+}
+
 void LRU(std::vector<int> page_refs, int num_frames){
+
+    std::vector<std::vector<int>> bin_matrix(num_frames, std::vector<int> (num_frames, 0)); // 2D binary matrix to keep track of usages
+    
+    printMatrix(bin_matrix, num_frames, num_frames);
+    
+    std::cout << std::endl;
+    
+    int k = 0; // used to store current page ref
+    std::vector<bool> page_faults(page_refs.size(), false); // vector to keep track of page faults
+    int page_fault_count = 0; // fault counter
+    std::vector<int> frame_state_current(num_frames, -1); // current frame state
+    int current = 0; // frame to be used next
+    std::vector<std::vector<int>> frame_state_all; // all frame states over entire process
+
+    for (int i=0; i<page_refs.size(); i++){
+        k = page_refs[i];
+        std::cout << "k = " << k << std::endl;
+        for (int j = 0; j<num_frames; j++){ // set every element of row k to 1
+            //std::cout << "attempting to insert 1 at (" << j << ", " << current << ")" << std::endl;
+            bin_matrix[current][j] = 1; // dies here???
+            //printMatrix(bin_matrix, num_frames, num_frames);
+            
+        }
+        
+        for (int j = 0; j<num_frames; j++){ // set every element of column k to 0
+            //std::cout << "attempting to insert 0 at (" << j << ", " << current << ")" << std::endl;
+            bin_matrix[j][current] = 0;
+            //printMatrix(bin_matrix, num_frames, num_frames);
+        }
+        
+        printMatrix(bin_matrix, num_frames, num_frames);
+        if (i>0){
+            current = checkLowest(bin_matrix, num_frames, num_frames); // compute the LRU frame
+            std::cout << "least recently used frame: " << current << std::endl;
+            std::cout << std::endl;
+        }
+        
+        
+        // place page into frame if not currently in a frame
+        // if the page is already in use, continue to next iteration
+        auto idx = std::find(frame_state_current.begin(), frame_state_current.end(), k);
+        if (idx != frame_state_current.end()) {
+            frame_state_current[*idx] = k;
+        }
+        else {
+            frame_state_current[current] = k;
+            page_faults[k] = true;
+            page_fault_count++;
+        }
+        frame_state_all.push_back(frame_state_current); // save frame state
+        
+    }
+
+    print_results(page_refs, frame_state_all, page_faults);
+
     return;
 }
 
