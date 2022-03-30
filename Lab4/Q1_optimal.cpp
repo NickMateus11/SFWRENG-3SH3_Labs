@@ -200,7 +200,7 @@ int checkLowest(std::vector<std::vector<int>> mat, int x, int y){
             val = sum;
         }
     }
-    std::cout << "lru = " << lru << std::endl; 
+    // std::cout << "lru = " << lru << std::endl; 
     return lru;
 }
 
@@ -231,19 +231,19 @@ void LRU(std::vector<int> page_refs, int num_frames){
         
         //printMatrix(bin_matrix, num_frames, num_frames);
         current = checkLowest(bin_matrix, num_frames, num_frames); // compute the LRU frame
-        std::cout << "least recently used frame: " << current << std::endl;
+        // std::cout << "least recently used frame: " << current << std::endl;
         
         // place page into frame if not currently in a frame
         // if the page is already in use, continue to next iteration
         auto idx = find(frame_state_current, k);
-        std::cout << "idx = " << idx << std::endl;
+        // std::cout << "idx = " << idx << std::endl;
         if (idx != -1) {
-            std::cout << "replacement at " <<  idx << std::endl;
+            // std::cout << "replacement at " <<  idx << std::endl;
             frame_state_current[idx] = k;
             current = idx;
         }
         else {
-            std::cout << "lru at " << current << std::endl;
+            // std::cout << "lru at " << current << std::endl;
             frame_state_current[current] = k;
             page_faults[i] = true;
             page_fault_count++;
@@ -262,7 +262,7 @@ void LRU(std::vector<int> page_refs, int num_frames){
         
         
         frame_state_all.push_back(frame_state_current); // save frame state
-        std::cout << std::endl << "***************************************" << std::endl;
+        // std::cout << std::endl << "***************************************" << std::endl;
     }
 
     print_results(page_refs, frame_state_all, page_faults);
