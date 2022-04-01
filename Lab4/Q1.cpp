@@ -217,9 +217,7 @@ void LRU(std::vector<int> page_refs, int num_frames){
     std::cout << "LRU" << std::endl;
 
     std::vector<std::vector<int>> bin_matrix(num_frames, std::vector<int> (num_frames, 0)); // 2D binary matrix to keep track of usages
-    
-    std::cout << std::endl;
-    
+        
     int k = 0; // used to store current page ref
     std::vector<bool> page_faults(page_refs.size(), false); // vector to keep track of page faults
     int page_fault_count = 0; // fault counter
