@@ -214,7 +214,7 @@ int find(std::vector<int> arr, int key) {
 }
 
 void LRU(std::vector<int> page_refs, int num_frames){
-    std::cout << "Optimal" << std::endl;
+    std::cout << "LRU" << std::endl;
 
     std::vector<std::vector<int>> bin_matrix(num_frames, std::vector<int> (num_frames, 0)); // 2D binary matrix to keep track of usages
     
